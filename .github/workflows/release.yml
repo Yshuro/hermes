@@ -49,8 +49,8 @@ jobs:
 
       - name: Deploy to release Branch
         run: |
-          git config user.name "dheereshag"
-          git config user.email "da11@iitbbs.ac.in"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
           # Stage release artifacts to a temporary location outside the repository
           RELEASE_DIR=$(mktemp -d)
@@ -77,6 +77,6 @@ jobs:
           git add -f src.*.so
           git add .
 
-          # Commit and force push to release branch
+          # Commit and force push exclusively to release branch
           git commit -m "build(arm64): release compiled binary for ${GITHUB_SHA:0:7} [skip ci]"
           git push -f origin release

@@ -2,11 +2,17 @@ from __future__ import annotations
 
 from typing import Any
 
-from flask import Blueprint, jsonify, redirect, render_template
+from flask import Blueprint, jsonify, redirect, render_template, request
 
 from src.devices.wifi import get_available_networks, is_wifi_connected
 
 views_bp = Blueprint("views", __name__)
+
+
+@views_bp.before_request
+def auto_redirect_config_domain() -> Any:
+    if request.host.split(":")[0].lower() == "hermes.config" and request.path in {"/", "/index"}:
+        return redirect("/config", code=302)
 
 PAGE_ROUTES = (
     "/", "/index", "/scale", "/anpr", "/cloud",
@@ -41,3 +47,11 @@ def captive_portal_probe() -> Any:
     if not is_wifi_connected():
         return redirect("/wifi", code=302)
     return "", 204
+
+
+@views_bp.route("/.well-known/captive-portal")
+def capport_endpoint() -> Any:
+    """RFC 8908 Captive Portal API endpoint for modern Android and iOS devices."""
+    payload = {"captive": not is_wifi_connected(), "user-portal-url": "/wifi"}
+    return jsonify(payload), 200, {"Content-Type": "application/captive+json"}
+
