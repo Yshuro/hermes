@@ -24,8 +24,9 @@ class TestThreadingIsolation(unittest.TestCase):
         self.assertEqual(session_id, "TEST_SESSION_ASYNC")
 
 
+    @patch("src.core.session.capture_anpr_snapshots", return_value=[])
     @patch("src.core.session.capture_all_camera_snapshots")
-    def test_on_weight_stabilized_is_non_blocking(self, mock_capture):
+    def test_on_weight_stabilized_is_non_blocking(self, mock_capture, _mock_anpr):
         sm = WeighbridgeSessionManager()
         aux_captured_event = threading.Event()
 

@@ -15,6 +15,8 @@ NM_CAPPORT_FILE = NM_DNSMASQ_DIR / "hermes-captive.conf"
 def setup_nm_capport_config(gateway_ip: str = "10.42.0.1", http_port: int = 80) -> bool:
     """Configures NetworkManager shared dnsmasq for wildcard DNS and RFC 8910 Option 114."""
     try:
+        from src.devices.wifi.runner import SIMULATION_STATE
+        if SIMULATION_STATE.get("enabled"): return True
         p_sfx = f":{http_port}" if http_port != 80 else ""
         content = f"address=/#/{gateway_ip}\ndhcp-option=114,http://{gateway_ip}{p_sfx}/.well-known/captive-portal\n"
         if NM_CAPPORT_FILE.exists() and NM_CAPPORT_FILE.read_text(encoding="utf-8") == content: return True
@@ -36,6 +38,8 @@ def setup_nm_capport_config(gateway_ip: str = "10.42.0.1", http_port: int = 80) 
 def teardown_nm_capport_config() -> None:
     """Removes custom NetworkManager dnsmasq configuration."""
     try:
+        from src.devices.wifi.runner import SIMULATION_STATE
+        if SIMULATION_STATE.get("enabled"): return
         if NM_CAPPORT_FILE.exists():
             try: NM_CAPPORT_FILE.unlink(missing_ok=True); return
             except (OSError, PermissionError): pass

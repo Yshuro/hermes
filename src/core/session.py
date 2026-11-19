@@ -393,14 +393,15 @@ class WeighbridgeSessionManager:
             logger.info(f"[Session {self.session_id}] Weight zeroed. Resetting session manager.")
             self._stop_anpr_event.set()
             old_anpr_thread = self._anpr_thread
+            old_fleet_thread = self._fleet_snapshot_thread
             old_pool = self._anpr_pool
             old_http = self._http_session
             self._anpr_thread = None
+            self._fleet_snapshot_thread = None
             self._anpr_pool = None
             self._http_session = None
             self._pending_anpr_futures.clear()
             self._stop_anpr_event = threading.Event()
-            self._fleet_snapshot_thread = None
             self.phase = SessionPhase.PHASE_IDLE
             self.session_id = None
             self.stable_weight = 0.0
@@ -411,6 +412,8 @@ class WeighbridgeSessionManager:
 
         if old_anpr_thread and old_anpr_thread.is_alive():
             old_anpr_thread.join(timeout=0.3)
+        if old_fleet_thread and old_fleet_thread.is_alive():
+            old_fleet_thread.join(timeout=0.3)
         if old_pool is not None:
             old_pool.shutdown(wait=False, cancel_futures=True)
         if old_http is not None:

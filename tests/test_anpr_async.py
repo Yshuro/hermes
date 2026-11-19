@@ -48,7 +48,8 @@ class TestAsyncANPR(unittest.TestCase):
         self.assertEqual(len(futures), 2)
         self.assertEqual(pool.submit.call_count, 2)
 
-    def test_stale_session_rejection(self):
+    @patch("src.core.session.capture_anpr_snapshots", return_value=[])
+    def test_stale_session_rejection(self, _mock_snaps):
         self.sm.start_session()
         truck1_session_id = self.sm.session_id
         assert truck1_session_id is not None
@@ -134,8 +135,9 @@ class TestAsyncANPR(unittest.TestCase):
         self.assertEqual(len(recorded_events), 1)
         self.assertEqual(recorded_events[0], ("SESS_ERR_TEST", 1, None, "ANPR_WORKER_ERROR"))
 
+    @patch("src.core.session.capture_all_camera_snapshots", return_value={"anpr_1": b"frame"})
     @patch("src.core.session.capture_anpr_snapshots")
-    def test_finalize_package_drains_pending_futures(self, mock_snaps):
+    def test_finalize_package_drains_pending_futures(self, mock_snaps, _mock_fleet):
         mock_snaps.return_value = [(1, "http://cam1/frame", b"delayed_jpeg")]
         self.sm.start_session()
 

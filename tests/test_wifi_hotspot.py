@@ -44,9 +44,10 @@ class TestWiFiHotspot(unittest.TestCase):
         watchdog.notify_network_status(True)
         mock_led.assert_called_with(True); mock_scale.assert_called_with(True)
 
+    @patch("src.devices.wifi.watchdog.hotspot.start_emergency_hotspot")
     @patch("src.devices.wifi.watchdog.notify_network_status")
-    @patch("src.devices.wifi.watchdog.is_network_connected", side_effect=[False, False, False, False])
-    def test_watchdog_loop_notifies_status(self, mock_conn: MagicMock, mock_notify: MagicMock) -> None:
+    @patch("src.devices.wifi.watchdog.is_network_connected", return_value=False)
+    def test_watchdog_loop_notifies_status(self, mock_conn: MagicMock, mock_notify: MagicMock, _mock_hs: MagicMock) -> None:
         watchdog.start_wifi_watchdog(interval=0.01); time.sleep(0.08); watchdog.stop_wifi_watchdog()
         mock_notify.assert_any_call(False)
 

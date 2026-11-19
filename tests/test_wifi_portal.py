@@ -33,12 +33,12 @@ class TestWiFiPortal(unittest.TestCase):
     def test_portal_http_endpoints_and_probes(self) -> None:
         http_srv = CaptiveHTTPServer(port=8894)
         self.assertTrue(http_srv.start())
-        opener = urllib.request.build_opener(NoRedirectHandler)
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirectHandler)
         try:
             base = f"http://127.0.0.1:{http_srv.port}"
-            with urllib.request.urlopen(f"{base}/", timeout=3.0) as r:
+            with opener.open(f"{base}/", timeout=3.0) as r:
                 self.assertEqual(r.status, 200); self.assertIn("Gluvok Hermes", r.read().decode())
-            with urllib.request.urlopen(f"{base}/networks", timeout=3.0) as r:
+            with opener.open(f"{base}/networks", timeout=3.0) as r:
                 self.assertEqual(r.status, 200); self.assertIsInstance(json.loads(r.read().decode()), list)
             req = urllib.request.Request(f"{base}/generate_204", headers={"Host": "connectivitycheck.gstatic.com"})
             try: opener.open(req, timeout=3.0)

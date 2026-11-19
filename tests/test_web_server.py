@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import unittest
-import unittest.mock
+from unittest.mock import patch
 
 from src.config import config
 from src.core.telemetry import reset_state
@@ -34,6 +34,8 @@ class TestFlaskDiagnosticsApp(unittest.TestCase):
         self.auth_token = res.get_json()["token"]
 
     def tearDown(self):
+        from src.devices.scale import get_uart_reader
+        get_uart_reader().stop()
         import sqlite3
 
         from src.config.store import get_config_db_path
@@ -221,7 +223,8 @@ class TestFlaskDiagnosticsApp(unittest.TestCase):
         self.assertIn("stability_duration", data)
         self.assertIn("stability_tolerance", data)
 
-    def test_post_api_config_success(self):
+    @patch("src.web.blueprints.api._apply_uart_config_changes")
+    def test_post_api_config_success(self, _mock_uart_restart):
         payload = {
             "serial_port": "/dev/ttyUSB0",
             "serial_baudrate": 9600,
@@ -353,7 +356,7 @@ class TestFlaskDiagnosticsApp(unittest.TestCase):
         self.assertTrue(res2.get_json()["success"])
 
     def test_captive_portal_probes(self):
-        with unittest.mock.patch("src.web.blueprints.views.is_wifi_connected", return_value=False):
+        with patch("src.web.blueprints.views.is_wifi_connected", return_value=False):
             res_gen = self.client.get("/generate_204")
             self.assertEqual(res_gen.status_code, 302)
             self.assertIn("/wifi", res_gen.headers.get("Location", ""))
@@ -361,7 +364,7 @@ class TestFlaskDiagnosticsApp(unittest.TestCase):
             res_cna = self.client.get("/hotspot-detect.html")
             self.assertEqual(res_cna.status_code, 302)
 
-        with unittest.mock.patch("src.web.blueprints.views.is_wifi_connected", return_value=True):
+        with patch("src.web.blueprints.views.is_wifi_connected", return_value=True):
             res_online = self.client.get("/generate_204")
             self.assertEqual(res_online.status_code, 204)
 

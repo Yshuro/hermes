@@ -7,15 +7,22 @@ from src.core.session import SessionPhase, WeighbridgeSessionManager
 class TestSessionErrorFallback(unittest.TestCase):
     def setUp(self):
         self.sm = WeighbridgeSessionManager()
+        self.anpr_snaps_patcher = patch("src.core.session.capture_anpr_snapshots", return_value=[])
+        self.fleet_snaps_patcher = patch(
+            "src.core.session.capture_all_camera_snapshots",
+            return_value={"anpr_1": b"\xff\xd8\xff\xe0\x00\x10JFIF_TRUCK_FRAME"},
+        )
+        self.mock_anpr_snaps = self.anpr_snaps_patcher.start()
+        self.mock_fleet_snaps = self.fleet_snaps_patcher.start()
 
     def tearDown(self):
+        self.anpr_snaps_patcher.stop()
+        self.fleet_snaps_patcher.stop()
         self.sm.reset_session()
 
     @patch("src.core.session.send_frame_to_anpr_server")
-    @patch("src.core.session.fetch_image_bytes")
-    def test_session_recognition_failure_sends_no_plate_detected_and_includes_image(self, mock_fetch, mock_send):
+    def test_session_recognition_failure_sends_no_plate_detected_and_includes_image(self, mock_send):
         fake_truck_frame = b"\xff\xd8\xff\xe0\x00\x10JFIF_TRUCK_FRAME"
-        mock_fetch.return_value = fake_truck_frame
         mock_send.return_value = (None, "NO_PLATE_DETECTED")
 
         self.sm.start_session()
@@ -41,10 +48,8 @@ class TestSessionErrorFallback(unittest.TestCase):
         self.assertEqual(pkg["camera_snapshots"]["anpr_1"], fake_truck_frame)
 
     @patch("src.core.session.send_frame_to_anpr_server")
-    @patch("src.core.session.fetch_image_bytes")
-    def test_session_prefers_valid_plate_over_transient_errors(self, mock_fetch, mock_send):
+    def test_session_prefers_valid_plate_over_transient_errors(self, mock_send):
         fake_truck_frame = b"\xff\xd8\xff\xe0\x00\x10JFIF_TRUCK_FRAME"
-        mock_fetch.return_value = fake_truck_frame
 
         self.sm.start_session()
 
