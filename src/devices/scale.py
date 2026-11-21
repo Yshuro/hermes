@@ -209,10 +209,11 @@ class ScaleUARTReader:
         if m:
             try:
                 val = float(int(m.group(1)))
-                handle_scale_char_processed(val)
-                return
             except ValueError:
                 pass
+            else:
+                handle_scale_char_processed(val)
+                return
 
         # 2. Fallback flexible numeric extraction (supports signed float/int e.g. +05000.5 or -12.5)
         text = buf.decode("utf-8", errors="ignore")
@@ -220,10 +221,11 @@ class ScaleUARTReader:
         if m_flex:
             try:
                 val = float(m_flex.group(1))
-                handle_scale_char_processed(val)
-                return
             except ValueError:
                 pass
+            else:
+                handle_scale_char_processed(val)
+                return
 
 
 # Module-level singleton and callback bridge
