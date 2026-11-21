@@ -63,6 +63,20 @@ class TestScaleUARTReader(unittest.TestCase):
             self.reader.handle_scale_char("-12.5\r\n")
             self.assertIn(-12.5, self.parsed_weights)
 
+    def test_downstream_value_error_does_not_duplicate_processing(self):
+        call_count = 0
+
+        def mock_processed_weight(val: float):
+            nonlocal call_count
+            call_count += 1
+            raise ValueError("Downstream stability or session validation error")
+
+        with patch("src.devices.scale.handle_scale_char_processed", side_effect=mock_processed_weight):
+            # Pipeline error is caught and logged so the reader thread does not terminate
+            self.reader.handle_scale_char("26500MN\r\n")
+
+            self.assertEqual(call_count, 1)
+
     def test_lifecycle_and_restart(self):
         reader = ScaleUARTReader()
         with patch.object(reader, "_open_serial", return_value=True):

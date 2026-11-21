@@ -186,7 +186,10 @@ class ScaleUARTReader:
                     self._line_buffer.clear()
 
             if buf_to_parse:
-                self._parse_raw_buffer(buf_to_parse)
+                try:
+                    self._parse_raw_buffer(buf_to_parse)
+                except Exception:
+                    logger.exception("[Scale] pipeline error; packet dropped")
 
     def _check_timeout_flush(self):
         """Flushes the line buffer if inter-character timeout (300ms) has elapsed."""
@@ -197,7 +200,10 @@ class ScaleUARTReader:
                 self._line_buffer.clear()
 
         if buf_to_parse:
-            self._parse_raw_buffer(buf_to_parse)
+            try:
+                self._parse_raw_buffer(buf_to_parse)
+            except Exception:
+                logger.exception("[Scale] pipeline error; packet dropped")
 
     def _parse_raw_buffer(self, buf: bytes):
         """Extracts weight numeric value from raw packet buffer and notifies stability logic."""
@@ -209,10 +215,11 @@ class ScaleUARTReader:
         if m:
             try:
                 val = float(int(m.group(1)))
-                handle_scale_char_processed(val)
-                return
             except ValueError:
                 pass
+            else:
+                handle_scale_char_processed(val)
+                return
 
         # 2. Fallback flexible numeric extraction (supports signed float/int e.g. +05000.5 or -12.5)
         text = buf.decode("utf-8", errors="ignore")
@@ -220,10 +227,11 @@ class ScaleUARTReader:
         if m_flex:
             try:
                 val = float(m_flex.group(1))
-                handle_scale_char_processed(val)
-                return
             except ValueError:
                 pass
+            else:
+                handle_scale_char_processed(val)
+                return
 
 
 # Module-level singleton and callback bridge
