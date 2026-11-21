@@ -186,7 +186,10 @@ class ScaleUARTReader:
                     self._line_buffer.clear()
 
             if buf_to_parse:
-                self._parse_raw_buffer(buf_to_parse)
+                try:
+                    self._parse_raw_buffer(buf_to_parse)
+                except Exception:
+                    logger.exception("[Scale] pipeline error; packet dropped")
 
     def _check_timeout_flush(self):
         """Flushes the line buffer if inter-character timeout (300ms) has elapsed."""
@@ -197,7 +200,10 @@ class ScaleUARTReader:
                 self._line_buffer.clear()
 
         if buf_to_parse:
-            self._parse_raw_buffer(buf_to_parse)
+            try:
+                self._parse_raw_buffer(buf_to_parse)
+            except Exception:
+                logger.exception("[Scale] pipeline error; packet dropped")
 
     def _parse_raw_buffer(self, buf: bytes):
         """Extracts weight numeric value from raw packet buffer and notifies stability logic."""

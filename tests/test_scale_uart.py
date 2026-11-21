@@ -72,8 +72,8 @@ class TestScaleUARTReader(unittest.TestCase):
             raise ValueError("Downstream stability or session validation error")
 
         with patch("src.devices.scale.handle_scale_char_processed", side_effect=mock_processed_weight):
-            with self.assertRaises(ValueError):
-                self.reader.handle_scale_char("26500MN\r\n")
+            # Pipeline error is caught and logged so the reader thread does not terminate
+            self.reader.handle_scale_char("26500MN\r\n")
 
             self.assertEqual(call_count, 1)
 
